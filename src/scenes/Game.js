@@ -19,7 +19,7 @@ class Game extends Phaser.Scene {
     });
     this.load.image('clouds-sheet', 'assets/tilesets/clouds.png');
 
-    const sprites = ['idle', 'run', 'pivot', 'jump', 'flip', 'fall'];
+    const sprites = ['idle', 'run', 'pivot', 'jump', 'flip', 'fall', 'die'];
     sprites.forEach((sprite) =>
       this.load.spritesheet(
         `hero-${sprite}-sheet`,
@@ -70,6 +70,9 @@ class Game extends Phaser.Scene {
           repeat: -1,
         },
       },
+      die: {
+        animation: 'dead',
+      },
     };
     Object.keys(anims).forEach((anim) =>
       this.anims.create({
@@ -89,7 +92,6 @@ class Game extends Phaser.Scene {
       this.map.widthInPixels,
       this.map.heightInPixels,
     );
-    this.cameras.main.startFollow(this.hero);
   }
 
   _addMap() {
@@ -141,19 +143,43 @@ class Game extends Phaser.Scene {
 
   _addHero() {
     this.hero = new Hero(this, this.spawnPos.x, this.spawnPos.y);
+    this.cameras.main.startFollow(this.hero);
 
     this.children.moveTo(
       this.hero,
       this.children.getIndex(this.map.getLayer('Foreground').tilemapLayer),
     );
 
-    this.physics.add.collider(
+    const groundCollider = this.physics.add.collider(
       this.hero,
       this.map.getLayer('Ground').tilemapLayer,
     );
+
+    const spikesCollider = this.physics.add.overlap(
+      this.hero,
+      this.spikeGroup,
+      () => this.hero.kill(),
+    );
+
+    this.hero.on('died', () => {
+      groundCollider.destroy();
+      spikesCollider.destroy();
+      this.hero.body.setCollideWorldBounds(false);
+      this.cameras.main.stopFollow();
+    });
   }
 
-  update(time, delta) {}
+  update(time, delta) {
+    const cameraBottom = this.cameras.main.getWorldPoint(
+      0,
+      this.cameras.main.height,
+    ).y;
+
+    if (this.hero.isDead() && this.hero.getBounds().top > cameraBottom + 100) {
+      this.hero.destroy();
+      this._addHero();
+    }
+  }
 }
 
 export default Game;
