@@ -1,26 +1,27 @@
-import Phaser from 'phaser'
-import StateMachine from 'javascript-state-machine'
+import Phaser from 'phaser';
+import StateMachine from 'javascript-state-machine';
 
 class Hero extends Phaser.GameObjects.Sprite {
   constructor(scene, x, y) {
-    super(scene, x, y, 'hero-run-sheet', 0)
+    super(scene, x, y, 'hero-run-sheet', 0);
 
-    scene.add.existing(this)
-    scene.physics.add.existing(this)
+    scene.add.existing(this);
+    scene.physics.add.existing(this);
 
-    this.anims.play('hero-running')
+    this.anims.play('hero-running');
 
-    this.body.setCollideWorldBounds(true)
-    this.body.setSize(12, 40)
-    this.body.setOffset(12, 23)
-    this.body.setMaxVelocity(250, 400)
-    this.body.setDragX(750)
+    this.setOrigin(0.5, 1);
+    this.body.setCollideWorldBounds(true);
+    this.body.setSize(12, 40);
+    this.body.setOffset(12, 23);
+    this.body.setMaxVelocity(250, 400);
+    this.body.setDragX(750);
 
-    this.keys = scene.cursorKeys
-    this.input = {}
+    this.keys = scene.cursorKeys;
+    this.input = {};
 
-    this.setupAnimations()
-    this.setupMovement()
+    this.setupAnimations();
+    this.setupMovement();
   }
 
   setupAnimations() {
@@ -37,7 +38,7 @@ class Hero extends Phaser.GameObjects.Sprite {
       methods: {
         onEnterState: (lifecycle) => this.anims.play(`hero-${lifecycle.to}`),
       },
-    })
+    });
 
     this.animPredicates = {
       idle: () => this.body.onFloor() && this.body.velocity.x === 0,
@@ -50,7 +51,7 @@ class Hero extends Phaser.GameObjects.Sprite {
       jump: () => this.body.velocity.y < 0,
       flip: () => this.body.velocity.y < 0 && this.moveState.is('flipping'),
       fall: () => this.body.velocity.y > 0,
-    }
+    };
   }
 
   setupMovement() {
@@ -70,31 +71,31 @@ class Hero extends Phaser.GameObjects.Sprite {
         onJump: () => this.body.setVelocityY(-400),
         onFlip: () => this.body.setVelocityY(-300),
       },
-    })
+    });
 
     this.movePredicates = {
       jump: () => this.input.didPressJump,
       flip: () => this.input.didPressJump,
       fall: () => !this.body.onFloor(),
       touchdown: () => this.body.onFloor(),
-    }
+    };
   }
 
   preUpdate(time, delta) {
-    super.preUpdate(time, delta)
+    super.preUpdate(time, delta);
 
-    this.input.didPressJump = Phaser.Input.Keyboard.JustDown(this.keys.up)
+    this.input.didPressJump = Phaser.Input.Keyboard.JustDown(this.keys.up);
 
     if (this.keys.left.isDown) {
-      this.body.setAccelerationX(-1000)
-      this.setFlipX(true)
-      this.body.offset.x = 8
+      this.body.setAccelerationX(-1000);
+      this.setFlipX(true);
+      this.body.offset.x = 8;
     } else if (this.keys.right.isDown) {
-      this.body.setAccelerationX(1000)
-      this.setFlipX(false)
-      this.body.offset.x = 12
+      this.body.setAccelerationX(1000);
+      this.setFlipX(false);
+      this.body.offset.x = 12;
     } else {
-      this.body.setAccelerationX(0)
+      this.body.setAccelerationX(0);
     }
 
     if (
@@ -102,23 +103,23 @@ class Hero extends Phaser.GameObjects.Sprite {
       !this.keys.up.isDown &&
       this.body.velocity.y < -150
     ) {
-      this.body.setVelocityY(-150)
+      this.body.setVelocityY(-150);
     }
 
     for (const t of this.moveState.transitions()) {
       if (t in this.movePredicates && this.movePredicates[t]()) {
-        this.moveState[t]()
-        break
+        this.moveState[t]();
+        break;
       }
     }
 
     for (const t of this.animState.transitions()) {
       if (t in this.animPredicates && this.animPredicates[t]()) {
-        this.animState[t]()
-        break
+        this.animState[t]();
+        break;
       }
     }
   }
 }
 
-export default Hero
+export default Hero;
