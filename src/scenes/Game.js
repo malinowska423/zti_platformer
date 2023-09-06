@@ -9,6 +9,11 @@ class Game extends Phaser.Scene {
   init(data) {}
 
   preload() {
+    this.load.image('title', 'assets/images/title.png');
+    this.load.image('action', 'assets/images/action.png');
+    this.load.image('over', 'assets/images/over.png');
+    this.load.image('win', 'assets/images/win.png');
+
     this.load.tilemapTiledJSON('level-1', 'assets/tilemaps/level-1.json');
 
     this.load.spritesheet('world-1-sheet', 'assets/tilesets/world-1.png', {
@@ -32,9 +37,70 @@ class Game extends Phaser.Scene {
     );
   }
 
+  __addImages() {
+    this.titleImage = this.add.image(0, 0, 'title');
+    this.overImage = this.add.image(0, 0, 'over');
+    this.winImage = this.add.image(0, 0, 'win');
+
+    this.actionImage = this.add.image(0, 0, 'action');
+
+    this.titleImage.visible = false;
+    this.overImage.visible = false;
+    this.winImage.visible = false;
+    this.actionImage.visible = false;
+  }
+
+  __displayScreen(texture) {
+    const camera = this.cameras.main;
+    const cameraCenterX = camera.width / 2 + camera.scrollX;
+    const cameraCenterY = camera.height / 2 + camera.scrollY;
+
+    const mainImage =
+      texture === 'over'
+        ? this.overImage
+        : texture === 'win'
+        ? this.winImage
+        : this.titleImage;
+    mainImage.setPosition(cameraCenterX, cameraCenterY - 25);
+    this.actionImage.setPosition(cameraCenterX, cameraCenterY + 25);
+
+    mainImage.visible = true;
+    this.actionImage.visible = true;
+  }
+
   create(data) {
     this.cursorKeys = this.input.keyboard.createCursorKeys();
+    this.space = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.SPACE,
+    );
 
+    this._addAnimations();
+
+    this._addMap();
+
+    this.__addImages();
+    this.__displayScreen('title');
+
+    this.space.on('up', () => {
+      if (!this.gameOn) {
+        this.gameOn = true;
+        this.titleImage.visible = false;
+        this.overImage.visible = false;
+        this.winImage.visible = false;
+        this.actionImage.visible = false;
+        this._addHero();
+      }
+    });
+
+    this.cameras.main.setBounds(
+      0,
+      0,
+      this.map.widthInPixels,
+      this.map.heightInPixels,
+    );
+  }
+
+  _addAnimations() {
     const anims = {
       idle: {
         animation: 'idle',
@@ -80,17 +146,6 @@ class Game extends Phaser.Scene {
         frames: this.anims.generateFrameNumbers(`hero-${anim}-sheet`, {}),
         ...anims[anim].props,
       }),
-    );
-
-    this._addMap();
-
-    this._addHero();
-
-    this.cameras.main.setBounds(
-      0,
-      0,
-      this.map.widthInPixels,
-      this.map.heightInPixels,
     );
   }
 
@@ -175,9 +230,14 @@ class Game extends Phaser.Scene {
       this.cameras.main.height,
     ).y;
 
-    if (this.hero.isDead() && this.hero.getBounds().top > cameraBottom + 100) {
+    if (
+      this.hero &&
+      this.hero.isDead() &&
+      this.hero.getBounds().top > cameraBottom + 100
+    ) {
       this.hero.destroy();
-      this._addHero();
+      this.gameOn = false;
+      this.__displayScreen('over');
     }
   }
 }
