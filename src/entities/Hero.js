@@ -39,6 +39,7 @@ class Hero extends Phaser.GameObjects.Sprite {
           to: 'falling',
         },
         { name: 'die', from: '*', to: 'dead' },
+        { name: 'win', from: '*', to: 'won' },
       ],
       methods: {
         onEnterState: (lifecycle) => this.anims.play(`hero-${lifecycle.to}`),
@@ -76,6 +77,11 @@ class Hero extends Phaser.GameObjects.Sprite {
           from: ['jumping', 'flipping', 'falling', 'standing'],
           to: 'dead',
         },
+        {
+          name: 'win',
+          from: ['jumping', 'flipping', 'falling', 'standing'],
+          to: 'won',
+        },
       ],
       methods: {
         onJump: () => this.body.setVelocityY(-400),
@@ -104,24 +110,34 @@ class Hero extends Phaser.GameObjects.Sprite {
   }
 
   win() {
-    console.log('WIIIN');
+    if (this.moveState.can('win')) {
+      this.moveState.win();
+      this.animState.win();
+      this.emit('won');
+    }
   }
 
   isDead() {
     return this.moveState.is('dead');
   }
 
+  hasWon() {
+    return this.moveState.is('won');
+  }
+
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
     this.input.didPressJump =
-      !this.isDead() && Phaser.Input.Keyboard.JustDown(this.keys.up);
+      !this.isDead() &&
+      !this.hasWon() &&
+      Phaser.Input.Keyboard.JustDown(this.keys.up);
 
-    if (!this.isDead() && this.keys.left.isDown) {
+    if (!this.isDead() && !this.hasWon() && this.keys.left.isDown) {
       this.body.setAccelerationX(-1000);
       this.setFlipX(true);
       this.body.offset.x = 8;
-    } else if (!this.isDead() && this.keys.right.isDown) {
+    } else if (!this.isDead() && !this.hasWon() && this.keys.right.isDown) {
       this.body.setAccelerationX(1000);
       this.setFlipX(false);
       this.body.offset.x = 12;

@@ -31,7 +31,16 @@ class Game extends Phaser.Scene {
       spacing: 0,
     });
 
-    const sprites = ['idle', 'run', 'pivot', 'jump', 'flip', 'fall', 'die'];
+    const sprites = [
+      'idle',
+      'run',
+      'pivot',
+      'jump',
+      'flip',
+      'fall',
+      'die',
+      'win',
+    ];
     sprites.forEach((sprite) =>
       this.load.spritesheet(
         `hero-${sprite}-sheet`,
@@ -150,6 +159,9 @@ class Game extends Phaser.Scene {
       die: {
         animation: 'dead',
       },
+      win: {
+        animation: 'won',
+      },
     };
     Object.keys(anims).forEach((anim) =>
       this.anims.create({
@@ -226,6 +238,8 @@ class Game extends Phaser.Scene {
   }
 
   _addHero() {
+    !!this.hero && this.hero.destroy();
+
     this.hero = new Hero(this, this.spawnPos.x, this.spawnPos.y);
     this.cameras.main.startFollow(this.hero);
 
@@ -251,13 +265,18 @@ class Game extends Phaser.Scene {
       () => this.hero.win(),
     );
 
-    this.hero.on('died', () => {
-      groundCollider.destroy();
+    const destroyColliders = () => {
       spikesCollider.destroy();
       endDoorCollider.destroy();
       this.hero.body.setCollideWorldBounds(false);
       this.cameras.main.stopFollow();
+    };
+
+    this.hero.on('died', () => {
+      groundCollider.destroy();
+      destroyColliders();
     });
+    this.hero.on('won', destroyColliders);
   }
 
   update(time, delta) {
@@ -274,6 +293,11 @@ class Game extends Phaser.Scene {
       this.hero.destroy();
       this.gameOn = false;
       this.__displayScreen('over');
+    }
+
+    if (this.hero && this.hero.hasWon()) {
+      this.gameOn = false;
+      this.__displayScreen('win');
     }
   }
 }
