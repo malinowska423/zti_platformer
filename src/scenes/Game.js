@@ -24,6 +24,12 @@ class Game extends Phaser.Scene {
       spacing: 2,
     });
     this.load.image('clouds-sheet', 'assets/tilesets/clouds.png');
+    this.load.spritesheet('props-sheet', 'assets/tilesets/props.png', {
+      frameWidth: 32,
+      frameHeight: 32,
+      margin: 0,
+      spacing: 0,
+    });
 
     const sprites = ['idle', 'run', 'pivot', 'jump', 'flip', 'fall', 'die'];
     sprites.forEach((sprite) =>
@@ -158,6 +164,7 @@ class Game extends Phaser.Scene {
     this.map = this.make.tilemap({ key: 'level-1' });
     const groundTiles = this.map.addTilesetImage('world-1', 'world-1-sheet');
     const backgroundTiles = this.map.addTilesetImage('clouds', 'clouds-sheet');
+    const propsTiles = this.map.addTilesetImage('land-props', 'props-sheet');
 
     const backgroundLayer = this.map.createStaticLayer(
       'Background',
@@ -168,6 +175,8 @@ class Game extends Phaser.Scene {
     const groundLayer = this.map.createStaticLayer('Ground', groundTiles);
     groundLayer.setCollision([1, 2, 5], true);
 
+    this.map.createStaticLayer('Props', propsTiles);
+
     this.physics.world.setBounds(
       0,
       0,
@@ -177,6 +186,11 @@ class Game extends Phaser.Scene {
     this.physics.world.setBoundsCollision(true, true, false, true);
 
     this.spikeGroup = this.physics.add.group({
+      immovable: true,
+      allowGravity: false,
+    });
+
+    this.endGameDoorGroup = this.physics.add.group({
       immovable: true,
       allowGravity: false,
     });
@@ -195,6 +209,16 @@ class Game extends Phaser.Scene {
         spike.setOrigin(0, 1);
         spike.setSize(object.width - 10, object.height - 10);
         spike.setOffset(5, 10);
+      }
+      if (object.name.toLowerCase() === 'door') {
+        const endDoor = this.endGameDoorGroup.create(
+          object.x,
+          object.y,
+          'props-sheet',
+          object.gid - 1,
+        );
+        endDoor.setOrigin(-0.3, 1);
+        endDoor.setSize(object.width - 15, object.height);
       }
     });
 
@@ -221,9 +245,16 @@ class Game extends Phaser.Scene {
       () => this.hero.kill(),
     );
 
+    const endDoorCollider = this.physics.add.overlap(
+      this.hero,
+      this.endGameDoorGroup,
+      () => this.hero.win(),
+    );
+
     this.hero.on('died', () => {
       groundCollider.destroy();
       spikesCollider.destroy();
+      endDoorCollider.destroy();
       this.hero.body.setCollideWorldBounds(false);
       this.cameras.main.stopFollow();
     });

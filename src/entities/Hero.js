@@ -103,6 +103,10 @@ class Hero extends Phaser.GameObjects.Sprite {
     }
   }
 
+  win() {
+    console.log('WIIIN');
+  }
+
   isDead() {
     return this.moveState.is('dead');
   }
