@@ -13,6 +13,7 @@ class Game extends Phaser.Scene {
     this.load.image('action', 'assets/images/action.png');
     this.load.image('over', 'assets/images/over.png');
     this.load.image('win', 'assets/images/win.png');
+    this.load.image('legend', 'assets/images/legend.png');
 
     this.load.tilemapTiledJSON('level-1', 'assets/tilemaps/level-1.json');
 
@@ -43,6 +44,7 @@ class Game extends Phaser.Scene {
     this.winImage = this.add.image(0, 0, 'win');
 
     this.actionImage = this.add.image(0, 0, 'action');
+    this.legendImage = this.add.image(0, 0, 'legend');
 
     this.titleImage.visible = false;
     this.overImage.visible = false;
@@ -63,6 +65,8 @@ class Game extends Phaser.Scene {
         : this.titleImage;
     mainImage.setPosition(cameraCenterX, cameraCenterY - 25);
     this.actionImage.setPosition(cameraCenterX, cameraCenterY + 25);
+    texture === 'title' &&
+      this.legendImage.setPosition(cameraCenterX, cameraCenterY + 60);
 
     mainImage.visible = true;
     this.actionImage.visible = true;
@@ -88,6 +92,7 @@ class Game extends Phaser.Scene {
         this.overImage.visible = false;
         this.winImage.visible = false;
         this.actionImage.visible = false;
+        this.legendImage.visible = false;
         this._addHero();
       }
     });
